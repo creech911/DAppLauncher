@@ -1,1 +1,1 @@
-# DAppLauncher
+DAppLauncher is a React-based front-end application that serves as the cornerstone for dynamically launching and managing decentralized applications (DApps). It features a robust entry point that bootstraps the application, facilitates seamless navigation with configured routing, and ensures a secure and efficient connection to the backend API, paving the way for an intuitive and scalable DApp ecosystem.
