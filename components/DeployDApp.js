@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 
 const DeployDApp = () => {
   const [selectedFile, setSelectedFile] = useState(null);
+
   const providerUrl = process.env.REACT_APP_PROVIDER_URL;
   const privateKey = process.env.REACT_APP_PRIVATE_KEY;
 
@@ -27,7 +28,9 @@ const DeployDApp = () => {
     try {
       const provider = new ethers.providers.JsonRpcProvider(providerUrl);
       const wallet = new ethers.Wallet(privateKey, provider);
+
       console.log('Contract deployed to:', '');
+
       resetForm();
     } catch (error) {
       console.error('Deployment error:', error);
