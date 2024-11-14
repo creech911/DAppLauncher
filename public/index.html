@@ -9,6 +9,25 @@
     <div id="root"></div>
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script type="text/javascript">
+        'use strict';
+        
+        const e = React.createElement;
+
+        function DAppLauncherButton() {
+            function handleClick() {
+                alert('Button clicked!');
+            }
+
+            return e(
+                'button',
+                { onClick: handleClick },
+                'Click Me'
+            );
+        }
+
+        ReactDOM.render(e(DAppLauncherButton), document.getElementById('root'));
+    </script>
     <script src="path/to/your/js/file.js"></script>
 </body>
 </html>
