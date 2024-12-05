@@ -1,16 +1,20 @@
 require('dotenv').config();
 const Web3 = require('web3');
-const { abi, evm } = require('./YourContract.json'); // Assuming ABI and bytecode are exported from this JSON file
+const { abi, evm } = require('./YourContract.json');
 
 class EthereumService {
     constructor() {
-        this.web3 = new Web3(process.env.INFURA_URL); // Or your preferred provider
-        this.account = this.web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
-        this.web3.eth.accounts.wallet.add(this.account);
-        this.web3.eth.defaultAccount = this.account.address;
+        if (!EthereumService.instance) {
+            this.web3 = new Web3(process.env.INFURA_URL);
+            this.account = this.web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
+            this.web3.eth.accounts.wallet.add(this.account);
+            this.web3.eth.defaultAccount = this.account.address;
+            EthereumService.instance = this;
+        }
+
+        return EthereumService.instance;
     }
 
-    // Function to deploy a new contract
     async deployContract(contractArguments) {
         const contract = new this.web3.eth.Contract(abi);
         const deployOptions = {
@@ -18,13 +22,13 @@ class EthereumService {
             arguments: contractArguments,
         };
 
-        const gas = await contract.deploy(deployOptions).estimateGas();
+        const gasEstimate = await contract.deploy(deployOptions).estimateGas();
         const gasPrice = await this.web3.eth.getGasPrice();
 
         return contract.deploy(deployOptions)
             .send({
                 from: this.account.address,
-                gas: gas,
+                gas: gasEstimate,
                 gasPrice: gasPrice,
             })
             .then(deployment => {
@@ -37,18 +41,16 @@ class EthereumService {
             });
     }
 
-    // Function to interact with a deployed contract
     async interactWithContract(contractAddress, methodName, methodArgs = [], call = true) {
         const contract = new this.web3.eth.Contract(abi, contractAddress);
+
         if (call) {
-            // Call: for methods that don't alter the blockchain state
             return contract.methods[methodName](...methodArgs).call();
         } else {
-            // Send: for transactions that alter the blockchain state
-            const gas = await contract.methods[methodName](...methodArgs).estimateGas({ from: this.account.address });
+            const gasEstimate = await contract.methods[methodName](...methodArgs).estimateGas({ from: this.account.address });
             const gasPrice = await this.web3.eth.getGasPrice();
             return contract.methods[methodName](...methodArgs)
-                .send({ from: this.account.address, gas, gasPrice })
+                .send({ from: this.account.address, gas: gasEstimate, gasPrice: gasPrice })
                 .then(receipt => {
                     console.log('Transaction receipt:', receipt);
                     return receipt;
@@ -60,7 +62,6 @@ class EthereumService {
         }
     }
 
-    // Function to get data from the blockchain
     async getBlockchainData(callFunction) {
         return callFunction()
             .then(data => {
@@ -74,18 +75,12 @@ class EthereumService {
     }
 }
 
-// Example usage - put your contract's details and desired calls
 (async () => {
     const ethereumService = new EthereumService();
     try {
-        // Deploy a contract (if needed)
         const deployedContract = await ethereumService.deployContract(['ConstructorArgument1', 'ConstructorArgument2']);
-
-        // Interact with a contract (call method)
         const data = await ethereumService.interactWithContract(deployedContract.options.address, 'methodName', ['arg1', 'arg2'], true);
         console.log('Method call result:', data);
-
-        // Interact with a contract (send transaction)
         const receipt = await ethereumService.interactWithContract(deployedContract.options.address, 'methodName', ['arg1', 'arg2'], false);
         console.log('Transaction receipt:', receipt);
     } catch (error) {
